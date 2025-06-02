@@ -1,0 +1,10 @@
+name: aarc-metadata
+title:
+username: hlmgordon
+account: hlmgordon
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14864685
+bundleId: 10381908
+url: https://hlmgordon.shinyapps.io/aarc-metadata/
+version: 1

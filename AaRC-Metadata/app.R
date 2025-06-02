@@ -4,10 +4,10 @@ library(dplyr)
 library(DT)
 library(shinyWidgets)
 
-# Load data
+# read data
 df <- read.csv("aarc_metadata.csv", stringsAsFactors = FALSE)
 
-# Clean and convert data
+# format data
 df$sample_age <- as.numeric(df$sample_age)
 df$nuclear_depth_of_coverage <- as.numeric(df$nuclear_depth_of_coverage)
 df$latitude <- as.numeric(df$latitude)
