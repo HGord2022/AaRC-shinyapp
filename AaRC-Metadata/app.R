@@ -3,16 +3,34 @@ library(leaflet)
 library(dplyr)
 library(DT)
 library(shinyWidgets)
+library(googlesheets4)
 
 # read data
-df <- read.csv("aarc_metadata.csv", stringsAsFactors = FALSE)
+gs4_deauth()
+
+sheet_url <- "https://docs.google.com/spreadsheets/d/1me-fjDmVRktAGRvThZuA9O1VX9s_ZYwox2jDbtOhEZI/edit?gid=1182961736#gid=1182961736"
+
+# Define the sheets you actually want to use
+sheets_to_use <- c("canids", "capra", "ursus", "sus", "felis", "rodent")  # add sheets as they are filled in
+
+# Read and stack only selected sheets
+df <- lapply(sheets_to_use, function(s) {
+  read_sheet(sheet_url, sheet = s) %>%
+    mutate(across(everything(), as.character)) %>%  # convert all columns
+    mutate(.sheet = s)  # add column for sheet name
+}) %>%
+  bind_rows()
+
+# View the combined data
+head(df)
+
 
 # format data
 df$sample_age <- as.numeric(df$sample_age)
 df$nuclear_depth_of_coverage <- as.numeric(df$nuclear_depth_of_coverage)
 df$latitude <- as.numeric(df$latitude)
 df$longitude <- as.numeric(df$longitude)
-df <- df %>% filter(!is.na(latitude), !is.na(longitude))
+df <- df %>% filter(!is.na(latitude), !is.na(longitude), !is.na(sample_age), !is.na(nuclear_depth_of_coverage))
 
 ui <- navbarPage(
   title = div(
