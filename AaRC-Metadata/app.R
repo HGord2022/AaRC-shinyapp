@@ -3,27 +3,9 @@ library(leaflet)
 library(dplyr)
 library(DT)
 library(shinyWidgets)
-library(googlesheets4)
 
 # read data
-gs4_deauth()
-
-sheet_url <- "https://docs.google.com/spreadsheets/d/1me-fjDmVRktAGRvThZuA9O1VX9s_ZYwox2jDbtOhEZI/edit?gid=1182961736#gid=1182961736"
-
-# Define the sheets you actually want to use
-sheets_to_use <- c("canids", "capra", "ursus", "sus", "felis", "rodent")  # add sheets as they are filled in
-
-# Read and stack only selected sheets
-df <- lapply(sheets_to_use, function(s) {
-  read_sheet(sheet_url, sheet = s) %>%
-    mutate(across(everything(), as.character)) %>%  # convert all columns
-    mutate(.sheet = s)  # add column for sheet name
-}) %>%
-  bind_rows()
-
-# View the combined data
-head(df)
-
+df <- read.csv("aarc_metadata.csv") %>% select(-any_of("X"))
 
 # format data
 df$sample_age <- as.numeric(df$sample_age)
@@ -67,6 +49,11 @@ ui <- navbarPage(
         width: 100%;
         padding-bottom: 10px;
       }
+      .inline-numeric input {
+        width: 80px !important;
+        display: inline-block;
+        margin: 0 2px;
+      }
     "))
   ),
   
@@ -98,15 +85,28 @@ ui <- navbarPage(
                                     multiple = TRUE,
                                     options = list(`actions-box` = TRUE)),
                         
-                        sliderInput("age", "Sample Age Range (Years BP)",
-                                    min = 0,
-                                    max = 150000,
-                                    value = c(0, 150000)),
+                        # Sliders and inline numeric inputs for Age
+                        # Compact Age inputs
+                        div(style = "margin-top: 15px;",
+                            sliderInput("age", "Sample Age Range (Years BP)",
+                                        min = 0, max = 150000, value = c(0, 150000)),
+                            div(style = "display: flex; align-items: center; gap: 5px;",
+                                numericInput("age_min", NULL, value = 0, min = 0, max = 150000, width = "80px"),
+                                span("to"),
+                                numericInput("age_max", NULL, value = 150000, min = 0, max = 150000, width = "80px")
+                            )
+                        ),
                         
-                        sliderInput("coverage", "Nuclear Coverage",
-                                    min = 0,
-                                    max = 40,
-                                    value = c(0, 40)),
+                        # Compact Coverage inputs
+                        div(style = "margin-top: 15px;",
+                            sliderInput("coverage", "Nuclear Coverage",
+                                        min = 0, max = 40, value = c(0, 40)),
+                            div(style = "display: flex; align-items: center; gap: 5px;",
+                                numericInput("coverage_min", NULL, value = 0, min = 0, max = 40, width = "80px"),
+                                span("to"),
+                                numericInput("coverage_max", NULL, value = 40, min = 0, max = 40, width = "80px")
+                            )
+                        ),
                         
                         selectInput("colorBy", "Colour map points by:",
                                     choices = c("Species" = "samp_taxon_common",
@@ -122,7 +122,10 @@ ui <- navbarPage(
                         br(), br(),
                         div(style = "display: flex; justify-content: space-between; align-items: center;",
                             h4("Your filtered dataset:", style="font-size: 30px"),
-                            downloadButton("downloadData", "Download CSV")
+                            div(style = "display: flex; gap: 10px;",
+                                downloadButton("downloadData", "Download CSV"),
+                                actionButton("clear_selection", "Clear selection")
+                            )
                         ),
                         div(class = "scroll-container",
                             dataTableOutput("table")
@@ -135,7 +138,7 @@ ui <- navbarPage(
   tabPanel("About",
            div(class = "container-custom",
                h2("About the AaRC Metadata Project"),
-               p("The AaRC (Ancient aDNA Research Community) Metadata Project aims to create a harmonised database compiling metadata for published ancient animal genomes."),
+               p("The AaRC (Animal aDNA Research Community) Metadata Project aims to create a harmonised database compiling metadata for published ancient animal genomes."),
                p("We hope this will encourage better and more uniform metadata reporting standards. We eventually aim to align animal studies with other ongoing developments in the aDNA world, including humans."),
                p("This app is intended to allow people to explore what aDNA is out there, and provide access to the original publications and sequences.")
            )
@@ -149,7 +152,11 @@ ui <- navbarPage(
                  tags$li("Dr Anders Bergström – University of East Anglia"),
                  tags$li("Dr Kevin Daly – University College Dublin"),
                  tags$li("Róisín Ferguson – University of East Anglia"),
-                 tags$li("Matthias Sherman – Francis Crick Institute")
+                 tags$li("He Yu – Peking University"),
+                 tags$li("Matthias Sherman – Francis Crick Institute"),
+                 tags$li("Jolijn Erven – Trinity College Dublin"),
+                 tags$li("Lachie Scarsbrook – University of Oxford"),
+                 tags$li("Marco De Martino – Università di Roma Tor Vergata")
                )
            )
   )
@@ -171,12 +178,37 @@ server <- function(input, output, session) {
       )
   })
   
+  # Sync sliders and numeric inputs
+  observeEvent(input$age, {
+    updateNumericInput(session, "age_min", value = input$age[1])
+    updateNumericInput(session, "age_max", value = input$age[2])
+  })
+  observeEvent(c(input$age_min, input$age_max), {
+    updateSliderInput(session, "age", value = c(input$age_min, input$age_max))
+  })
+  observeEvent(input$coverage, {
+    updateNumericInput(session, "coverage_min", value = input$coverage[1])
+    updateNumericInput(session, "coverage_max", value = input$coverage[2])
+  })
+  observeEvent(c(input$coverage_min, input$coverage_max), {
+    updateSliderInput(session, "coverage", value = c(input$coverage_min, input$coverage_max))
+  })
+  
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
       setView(lng = mean(df$longitude, na.rm = TRUE),
               lat = mean(df$latitude, na.rm = TRUE),
               zoom = 2)
+  })
+  
+  # Track table row selection
+  selected_rows <- reactiveVal(NULL)
+  observeEvent(input$table_rows_selected, {
+    selected_rows(input$table_rows_selected)
+  })
+  observeEvent(input$clear_selection, {
+    selected_rows(NULL)
   })
   
   observe({
@@ -191,10 +223,22 @@ server <- function(input, output, session) {
       colors <- color_pal(data[[colorField]])
     }
     
+    # Jitter for display, keep original coords
+    data <- data %>%
+      mutate(
+        jitter_lat = latitude + runif(n(), -0.0009, 0.0009),
+        jitter_lng = longitude + runif(n(), -0.0009, 0.0009) * cos(latitude * pi / 180)
+      )
+    
+    # If rows selected, only show those
+    if (!is.null(selected_rows())) {
+      data <- data[selected_rows(), ]
+    }
+    
     leafletProxy("map", data = data) %>%
       clearMarkers() %>%
       addCircleMarkers(
-        lng = ~longitude, lat = ~latitude,
+        lng = ~jitter_lng, lat = ~jitter_lat,
         popup = ~paste0(
           "<b>Sample:</b> ", samp_name, "<br>",
           "<b>Species:</b> ", samp_taxon_common, "<br>",
@@ -252,12 +296,15 @@ server <- function(input, output, session) {
   output$table <- renderDataTable({
     datatable(
       filteredData(),
+      rownames = TRUE,
       options = list(
         scrollX = TRUE,
         pageLength = 10,
         autoWidth = TRUE
       ),
-      class = "display nowrap"
+      class = "display nowrap",
+      selection = "multiple",
+      colnames = colnames(filteredData()) # prevents adding X column
     )
   })
   
