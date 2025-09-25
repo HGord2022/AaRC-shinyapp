@@ -21,7 +21,5 @@ df <- lapply(sheets_to_use, function(s) {
 
 df$molecular_sex[!df$molecular_sex %in% c("F", "M")] <- "missing"
 
-# View the combined data
-head(df)
 
 write.csv(df, file="aarc_metadata.csv")
