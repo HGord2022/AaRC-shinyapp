@@ -1,0 +1,10 @@
+name: metaarcive
+title:
+username: aarc
+account: aarc
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17486674
+bundleId: 12104036
+url: https://aarc.shinyapps.io/metaarcive/
+version: 1

@@ -137,8 +137,8 @@ ui <- navbarPage(
   
   tabPanel("About",
            div(class = "container-custom",
-               h2("About the AaRC Metadata Project"),
-               p("The AaRC (Animal aDNA Research Community) Metadata Project aims to create a harmonised database compiling metadata for published ancient animal genomes."),
+               h2("About metAaRCive"),
+               p("The AaRC (Animal aDNA Research Community) metAaRCive (pronounced \"meta-archive\") project aims to create a harmonised database compiling metadata for published ancient animal genomes."),
                p("We hope this will encourage better and more uniform metadata reporting standards. We eventually aim to align animal studies with other ongoing developments in the aDNA world, including humans."),
                p("This app is intended to allow people to explore what aDNA is out there, and provide access to the original publications and sequences.")
            )
@@ -310,7 +310,7 @@ server <- function(input, output, session) {
   
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste0("AaRC_filtered_data_", Sys.Date(), ".csv")
+      paste0("metAaRCive_filtered_data_", Sys.Date(), ".csv")
     },
     content = function(file) {
       write.csv(filteredData(), file, row.names = FALSE)

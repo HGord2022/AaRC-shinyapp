@@ -1,11 +1,14 @@
-# AaRC-shinyapp
+# metAaRCive-shinyapp
 
-This is a repo for a Rshiny app for exploring the AaRC Metadata project database. The app is hosted here: https://hlmgordon.shinyapps.io/aarc-metadata/
+This is the repo for the R shiny app for exploring the [metAaRCive](https://github.com/AaRC-Animal-aDNA-Research-Community/metAaRCive) database, a resource of metadata for published ancient animal genomes curated by members of [AaRC](https://animal-adna.org/).
 
-app.R -- Script for the Rshiny app
+The app is hosted here: https://aarc.shinyapps.io/metaarcive/
 
-get_df.R -- Downloads and filters google sheets
+## Repository structure and files
 
-aarc_metadata.csv -- dataframe generated from get_df.R
-
-www/ -- directory for images to be used in the app
+- `metAaRCive/`
+  - `rsconnect/` - Deployment configuration for the Shiny app
+  - `www/` - Static assets used by the app, such as images
+  - `app.R` - Main R Shiny application script
+  - `get_df.R` - Downloads and filters the latest version of the database from the metAaRCive [repo](https://github.com/AaRC-Animal-aDNA-Research-Community/metAaRCive)
+  - `aarc_metadata.csv` - Generated data file used by the app
